@@ -86,7 +86,6 @@ class PopulatingGoogleAdwordsQuerySet(_QuerySet):
                 field = model._meta.get_field(field_name)
             except FieldDoesNotExist:
                 # Skip fields that dont exist in the model
-                print('SKIPPING FIELD DOES NOT EXIST', model, key, field_name, _value)
                 continue
 
             value = clean(_value, field)
@@ -98,7 +97,6 @@ class PopulatingGoogleAdwordsQuerySet(_QuerySet):
             if value != getattr(model, field_name):
                 update_fields.append(field_name)
                 setattr(model, field_name, value)
-            print('SETTING', field_name, _value)
 
         # Now set all currency fields, do this outside the loop above incase someone redefines the field order
         for field_name in update_fields:
@@ -1531,7 +1529,6 @@ class ReportFile(models.Model):
             try:
                 report_file = ReportFile.objects.create()
                 with report_file.file_manager('%s.gz' % report_file.pk) as f:
-                    print(report_definition)
                     report_downloader.DownloadReport(report_definition,
                                                      output=f,                                        include_zero_impressions=True)
                 return report_file
