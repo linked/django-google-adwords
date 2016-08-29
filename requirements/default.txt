@@ -1,8 +1,8 @@
 Django>=1.7
 py-moneyed==0.5.0
 django-money==0.7.0
-googleads
 django-appconf==1.0.1
 celery
 django-cereal==0.2.1
 django-toolkit==0.2.1
+-i git+https://github.com/linked/googleads-python-lib#egg=googleads
