@@ -86,6 +86,7 @@ class PopulatingGoogleAdwordsQuerySet(_QuerySet):
                 field = model._meta.get_field(field_name)
             except FieldDoesNotExist:
                 # Skip fields that dont exist in the model
+                print('SKIPPING FIELD DOES NOT EXIST', model, key, field_name, _value)
                 continue
 
             value = clean(_value, field)
@@ -97,6 +98,7 @@ class PopulatingGoogleAdwordsQuerySet(_QuerySet):
             if value != getattr(model, field_name):
                 update_fields.append(field_name)
                 setattr(model, field_name, value)
+            print('SETTING', field_name, _value)
 
         # Now set all currency fields, do this outside the loop above incase someone redefines the field order
         for field_name in update_fields:
@@ -146,7 +148,7 @@ class Account(models.Model):
     account_id = models.BigIntegerField(unique=True)
     status = models.CharField(max_length=32, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
     account = models.CharField(max_length=255, blank=True, null=True, help_text='Account descriptive name')
-    currency = models.CharField(max_length=255, blank=True, null=True, help_text='Account currency code')
+    currency = models.CharField(max_length=255, blank=True, null=True, help_text='Currency')
     account_last_synced = models.DateField(blank=True, null=True)
     campaign_last_synced = models.DateField(blank=True, null=True)
     ad_group_last_synced = models.DateField(blank=True, null=True)
@@ -444,23 +446,23 @@ class Account(models.Model):
                     'ContentBudgetLostImpressionShare',
                     'ContentImpressionShare',
                     'ContentRankLostImpressionShare',
-                    'ClickConversionRate',
-                    'ConversionRateManyPerClick',
+                    'ConversionRate',
+                    #'ConversionRateManyPerClick',
                     'ConversionValue',
-                    'ConvertedClicks',
-                    'ConversionsManyPerClick',
+                    'Conversions',
+                    #'ConversionsManyPerClick',
                     'Cost',
-                    'CostPerConvertedClick',
-                    'CostPerConversionManyPerClick',
-                    'CostPerEstimatedTotalConversion',
+                    'CostPerConversion',
+                    #'CostPerConversionManyPerClick',
+                    #'CostPerEstimatedTotalConversion',
                     'Ctr',
                     'Device',
-                    'EstimatedCrossDeviceConversions',
-                    'EstimatedTotalConversionRate',
-                    'EstimatedTotalConversionValue',
-                    'EstimatedTotalConversionValuePerClick',
-                    'EstimatedTotalConversionValuePerCost',
-                    'EstimatedTotalConversions',
+                    #'EstimatedCrossDeviceConversions',
+                    #'EstimatedTotalConversionRate',
+                    #'EstimatedTotalConversionValue',
+                    #'EstimatedTotalConversionValuePerClick',
+                    #'EstimatedTotalConversionValuePerCost',
+                    #'EstimatedTotalConversions',
                     'Impressions',
                     'InvalidClickRate',
                     'InvalidClicks',
@@ -475,7 +477,7 @@ class Account(models.Model):
                     'max': finish.strftime("%Y%m%d")
                 },
             },
-            'includeZeroImpressions': 'true'
+            #'includeZeroImpressions': 'true'
         }
 
         return report_definition
@@ -611,13 +613,13 @@ class DailyAccountMetrics(models.Model):
     avg_cpm = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Avg. CPM', null=True, blank=True)
     avg_position = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Avg. position')
     clicks = models.IntegerField(help_text='Clicks', null=True, blank=True)
-    click_conversion_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Click conversion rate')
+    #click_conversion_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Click conversion rate')
     conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Conv. rate')
-    converted_clicks = models.BigIntegerField(help_text='Converted clicks', null=True, blank=True)
+    #converted_clicks = models.BigIntegerField(help_text='Converted clicks', null=True, blank=True)
     total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Total conv. value')
-    conversions = models.BigIntegerField(help_text='Conversions', null=True, blank=True)
+    conversions = models.FloatField(help_text='Conversions', null=True, blank=True)
     cost = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost', null=True, blank=True)
-    cost_converted_click = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / converted click', null=True, blank=True)
+    #cost_converted_click = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / converted click', null=True, blank=True)
     cost_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / conv.', null=True, blank=True)
     ctr = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='CTR')
     device = models.CharField(max_length=255, choices=DEVICE_CHOICES, help_text='Device')
@@ -627,13 +629,13 @@ class DailyAccountMetrics(models.Model):
     updated = models.DateTimeField(auto_now=True)
     content_impr_share = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Content Impr. share')
     content_lost_is_rank = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Content Lost IS (rank)')
-    cost_est_total_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / est. total conv.', null=True, blank=True)
-    est_cross_device_conv = models.BigIntegerField(help_text='Est. cross-device conv.', null=True, blank=True)
-    est_total_conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. rate')
-    est_total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value')
-    est_total_conv_value_click = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / click')
-    est_total_conv_value_cost = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / cost')
-    est_total_conv = models.BigIntegerField(help_text='Est. total conv.', null=True, blank=True)
+    #cost_est_total_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / est. total conv.', null=True, blank=True)
+    #est_cross_device_conv = models.BigIntegerField(help_text='Est. cross-device conv.', null=True, blank=True)
+    #est_total_conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. rate')
+    #est_total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value')
+    #est_total_conv_value_click = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / click')
+    #est_total_conv_value_cost = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / cost')
+    #est_total_conv = models.BigIntegerField(help_text='Est. total conv.', null=True, blank=True)
     search_exact_match_is = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Search Exact match IS')
     search_impr_share = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Search Impr. share')
     search_lost_is_rank = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Search Lost IS (rank)')
@@ -739,12 +741,6 @@ class DailyAccountMetrics(models.Model):
         def is_synced(self, start, finish):
             raise NotImplementedError("DailyAccountMetrics.QuerySet.is_synced() is not implemented.")
             pass
-#             account_first_synced = DailyAccountMetrics.objects.filter(account=self).aggregate(Min('day'))
-#             first_synced_date = None
-#             if account_first_synced.has_key('day__min'):
-#                 first_synced_date = account_first_synced['day__min']
-#
-#             if not self.last_synced or (self.last_synced - timedelta(days=1)) < finish or not first_synced_date or first_synced_date > start:
 
 
 class Campaign(models.Model):
@@ -837,29 +833,29 @@ class Campaign(models.Model):
                            'ContentImpressionShare',
                            'ContentRankLostImpressionShare',
                            'ContentRankLostImpressionShare',
-                           'ClickConversionRate',
-                           'ConversionRateManyPerClick',
+                           'ConversionRate',
+                           #'ConversionRateManyPerClick',
                            'ConversionValue',
-                           'ConvertedClicks',
-                           'ConversionsManyPerClick',
+                           'Conversions',
+                           #'ConversionsManyPerClick',
                            'Cost',
-                           'CostPerConvertedClick',
-                           'CostPerConversionManyPerClick',
-                           'CostPerEstimatedTotalConversion',
-                           'CostPerEstimatedTotalConversion',
+                           'CostPerConversion',
+                           #'CostPerConversionManyPerClick',
+                           #'CostPerEstimatedTotalConversion',
+                           #'CostPerEstimatedTotalConversion',
                            'Ctr',
-                           'EstimatedCrossDeviceConversions',
-                           'EstimatedCrossDeviceConversions',
-                           'EstimatedTotalConversionRate',
-                           'EstimatedTotalConversionRate',
-                           'EstimatedTotalConversions',
-                           'EstimatedTotalConversions',
-                           'EstimatedTotalConversionValue',
-                           'EstimatedTotalConversionValue',
-                           'EstimatedTotalConversionValuePerClick',
-                           'EstimatedTotalConversionValuePerClick',
-                           'EstimatedTotalConversionValuePerCost',
-                           'EstimatedTotalConversionValuePerCost',
+                           #'EstimatedCrossDeviceConversions',
+                           #'EstimatedCrossDeviceConversions',
+                           #'EstimatedTotalConversionRate',
+                           #'EstimatedTotalConversionRate',
+                           #'EstimatedTotalConversions',
+                           #'EstimatedTotalConversions',
+                           #'EstimatedTotalConversionValue',
+                           #'EstimatedTotalConversionValue',
+                           #'EstimatedTotalConversionValuePerClick',
+                           #'EstimatedTotalConversionValuePerClick',
+                           #'EstimatedTotalConversionValuePerCost',
+                           #'EstimatedTotalConversionValuePerCost',
                            'Impressions',
                            'InvalidClickRate',
                            'InvalidClicks',
@@ -874,7 +870,7 @@ class Campaign(models.Model):
                 'dateRange': {'min': start.strftime("%Y%m%d"),
                               'max': finish.strftime("%Y%m%d")},
             },
-            'includeZeroImpressions': 'true'
+            #'includeZeroImpressions': 'true'
         }
 
         return report_definition
@@ -920,13 +916,13 @@ class DailyCampaignMetrics(models.Model):
     avg_cpm = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Avg. CPM', null=True, blank=True)
     avg_position = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Avg. position')
     clicks = models.IntegerField(help_text='Clicks', null=True, blank=True)
-    click_conversion_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Click conversion rate')
+    #click_conversion_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Click conversion rate')
     conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Conv. rate')
-    converted_clicks = models.BigIntegerField(help_text='Converted clicks', null=True, blank=True)
+    #converted_clicks = models.BigIntegerField(help_text='Converted clicks', null=True, blank=True)
     total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Total conv. value')
-    conversions = models.BigIntegerField(help_text='Conversions', null=True, blank=True)
+    conversions = models.FloatField(help_text='Conversions', null=True, blank=True)
     cost = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost', null=True, blank=True)
-    cost_converted_click = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / converted click', null=True, blank=True)
+    #cost_converted_click = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / converted click', null=True, blank=True)
     cost_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / conv.', null=True, blank=True)
     ctr = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='CTR')
     impressions = models.BigIntegerField(help_text='Impressions', null=True, blank=True)
@@ -935,13 +931,13 @@ class DailyCampaignMetrics(models.Model):
     updated = models.DateTimeField(auto_now=True)
     content_impr_share = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Content Impr. share')
     content_lost_is_rank = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Content Lost IS (rank)')
-    cost_est_total_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / est. total conv.', null=True, blank=True)
-    est_cross_device_conv = models.BigIntegerField(help_text='Est. cross-device conv.', null=True, blank=True)
-    est_total_conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. rate')
-    est_total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value')
-    est_total_conv_value_click = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / click')
-    est_total_conv_value_cost = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / cost')
-    est_total_conv = models.BigIntegerField(help_text='Est. total conv.', null=True, blank=True)
+    #cost_est_total_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / est. total conv.', null=True, blank=True)
+    #est_cross_device_conv = models.BigIntegerField(help_text='Est. cross-device conv.', null=True, blank=True)
+    #est_total_conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. rate')
+    #est_total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value')
+    #est_total_conv_value_click = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / click')
+    #est_total_conv_value_cost = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / cost')
+    #est_total_conv = models.BigIntegerField(help_text='Est. total conv.', null=True, blank=True)
     search_exact_match_is = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Search Exact match IS')
     search_impr_share = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Search Impr. share')
     search_lost_is_rank = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Search Lost IS (rank)')
@@ -1097,44 +1093,44 @@ class AdGroup(models.Model):
                            'CampaignName',
                            'CampaignStatus',
                            'TargetCpa',
-                           'ValuePerEstimatedTotalConversion',
+                           #'ValuePerEstimatedTotalConversion',
                            'BiddingStrategyId',
                            'BiddingStrategyName',
                            'BiddingStrategyType',
                            'ContentImpressionShare',
                            'ContentRankLostImpressionShare',
-                           'CostPerEstimatedTotalConversion',
-                           'EstimatedCrossDeviceConversions',
-                           'EstimatedTotalConversionRate',
-                           'EstimatedTotalConversionValue',
-                           'EstimatedTotalConversionValuePerClick',
-                           'EstimatedTotalConversionValuePerCost',
-                           'EstimatedTotalConversions',
+                           'CostPerConversion',
+                           #'EstimatedCrossDeviceConversions',
+                           #'EstimatedTotalConversionRate',
+                           #'EstimatedTotalConversionValue',
+                           #'EstimatedTotalConversionValuePerClick',
+                           #'EstimatedTotalConversionValuePerCost',
+                           #'EstimatedTotalConversions',
                            'SearchExactMatchImpressionShare',
                            'SearchImpressionShare',
                            'SearchRankLostImpressionShare',
-                           'ValuePerConvertedClick',
-                           'ValuePerConversionManyPerClick',
+                           'ValuePerConversion',
+                           #'ValuePerConversionManyPerClick',
                            'ViewThroughConversions',
                            'AverageCpc',
                            'AverageCpm',
                            'AveragePosition',
                            'Clicks',
-                           'ClickConversionRate',
-                           'ConversionRateManyPerClick',
+                           'ConversionRate',
+                           #'ConversionRateManyPerClick',
                            'ConversionValue',
-                           'ConvertedClicks',
-                           'ConversionsManyPerClick',
+                           'Conversions',
+                           #'ConversionsManyPerClick',
                            'Cost',
-                           'CostPerConvertedClick',
-                           'CostPerConversionManyPerClick',
+                           #'CostPerConversion',
+                           #'CostPerConversionManyPerClick',
                            'Ctr',
                            'Impressions',
                            'Date'],
                 'dateRange': {'min': start.strftime("%Y%m%d"),
                               'max': finish.strftime("%Y%m%d")},
             },
-            'includeZeroImpressions': 'true'
+            #'includeZeroImpressions': 'true'
         }
 
         return report_definition
@@ -1173,13 +1169,12 @@ class DailyAdGroupMetrics(models.Model):
     avg_cpm = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Avg. CPM', null=True, blank=True)
     avg_position = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Avg. position')
     clicks = models.IntegerField(help_text='Clicks', null=True, blank=True)
-    click_conversion_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Click conversion rate')
+    conversion_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Click conversion rate')
     conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Conv. rate')
-    converted_clicks = models.BigIntegerField(help_text='Converted clicks', null=True, blank=True)
     total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Total conv. value')
-    conversions = models.BigIntegerField(help_text='Conversions', null=True, blank=True)
+    conversions = models.FloatField(help_text='Conversions', null=True, blank=True)
     cost = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost', null=True, blank=True)
-    cost_converted_click = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / converted click', null=True, blank=True)
+    #cost_converted_click = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / converted click', null=True, blank=True)
     cost_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / conv.', null=True, blank=True)
     ctr = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='CTR')
     impressions = models.BigIntegerField(help_text='Impressions', null=True, blank=True)
@@ -1188,13 +1183,13 @@ class DailyAdGroupMetrics(models.Model):
     updated = models.DateTimeField(auto_now=True)
     content_impr_share = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Content Impr. share')
     content_lost_is_rank = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Content Lost IS (rank)')
-    cost_est_total_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / est. total conv.', null=True, blank=True)
-    est_cross_device_conv = models.BigIntegerField(help_text='Est. cross-device conv.', null=True, blank=True)
-    est_total_conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. rate')
-    est_total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value')
-    est_total_conv_value_click = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / click')
-    est_total_conv_value_cost = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / cost')
-    est_total_conv = models.BigIntegerField(help_text='Est. total conv.', null=True, blank=True)
+    #cost_est_total_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / est. total conv.', null=True, blank=True)
+    #est_cross_device_conv = models.BigIntegerField(help_text='Est. cross-device conv.', null=True, blank=True)
+    #est_total_conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. rate')
+    #est_total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value')
+    #est_total_conv_value_click = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / click')
+    #est_total_conv_value_cost = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Est. total conv. value / cost')
+    #est_total_conv = models.BigIntegerField(help_text='Est. total conv.', null=True, blank=True)
     search_exact_match_is = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Search Exact match IS')
     search_impr_share = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Search Impr. share')
     search_lost_is_rank = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Search Lost IS (rank)')
@@ -1202,10 +1197,10 @@ class DailyAdGroupMetrics(models.Model):
     bid_strategy_name = models.CharField(max_length=255, null=True, blank=True)
     bid_strategy_type = models.CharField(max_length=40, choices=BID_STRATEGY_TYPE_CHOICES, help_text='Bid Strategy Type', null=True, blank=True)
     max_cpa_converted_clicks = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Max. CPA (converted clicks)', null=True, blank=True)
-    value_est_total_conv = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Value / est. total conv.')
+    #value_est_total_conv = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Value / est. total conv.')
     value_converted_click = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Value / converted click')
     value_conv = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Value / conv.')
-    view_through_conv = models.BigIntegerField(help_text='View-through conv.', null=True, blank=True)
+    viewthrough_conv = models.BigIntegerField(help_text='View-through conv.', null=True, blank=True)
 
     objects = QuerySetManager()
 
@@ -1392,14 +1387,14 @@ class Ad(models.Model):
                            'CampaignName',
                            'CampaignStatus',
                            'Clicks',
-                           'ClickConversionRate',
-                           'ConversionRateManyPerClick',
+                           #'ClickConversionRate',
+                           #'ConversionRateManyPerClick',
                            'ConversionValue',
-                           'ConvertedClicks',
-                           'ConversionsManyPerClick',
+                           'Conversions',
+                           #'ConversionsManyPerClick',
                            'Cost',
-                           'CostPerConvertedClick',
-                           'CostPerConversionManyPerClick',
+                           'CostPerConversion',
+                           #'CostPerConversionManyPerClick',
                            'CreativeApprovalStatus',
                            'CreativeDestinationUrl',
                            'Ctr',
@@ -1410,14 +1405,14 @@ class Ad(models.Model):
                            'Id',
                            'Impressions',
                            'Status',
-                           'ValuePerConvertedClick',
-                           'ValuePerConversionManyPerClick',
+                           'ValuePerConversion',
+                           #'ValuePerConversionManyPerClick',
                            'ViewThroughConversions',
                            'Date'],
                 'dateRange': {'min': start.strftime("%Y%m%d"),
                               'max': finish.strftime("%Y%m%d")},
             },
-            'includeZeroImpressions': 'true'
+            #'includeZeroImpressions': 'true'
         }
 
         return report_definition
@@ -1429,13 +1424,13 @@ class DailyAdMetrics(models.Model):
     avg_cpm = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Avg. CPM', null=True, blank=True)
     avg_position = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Avg. position')
     clicks = models.IntegerField(help_text='Clicks', null=True, blank=True)
-    click_conversion_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Click conversion rate')
+    #click_conversion_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Click conversion rate')
     conv_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Conv. rate')
-    converted_clicks = models.BigIntegerField(help_text='Converted clicks', null=True, blank=True)
+    #converted_clicks = models.BigIntegerField(help_text='Converted clicks', null=True, blank=True)
     total_conv_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='Total conv. value')
     conversions = models.BigIntegerField(help_text='Conversions', null=True, blank=True)
     cost = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost', null=True, blank=True)
-    cost_converted_click = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / converted click', null=True, blank=True)
+    #cost_converted_click = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / converted click', null=True, blank=True)
     cost_conv = MoneyField(max_digits=12, decimal_places=2, default=0, help_text='Cost / conv.', null=True, blank=True)
     ctr = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text='CTR')
     impressions = models.BigIntegerField(help_text='Impressions', null=True, blank=True)
@@ -1531,12 +1526,14 @@ class ReportFile(models.Model):
             @return OrderedDict containing report
             """
             client = adwords_service(client_customer_id)
-            report_downloader = client.GetReportDownloader(version=settings.GOOGLEADWORDS_CLIENT_VERSION)
+            report_downloader = client.GetReportDownloader(version=settings.GOOGLEADWORDS_CLIENT_VERSION,)
 
             try:
                 report_file = ReportFile.objects.create()
                 with report_file.file_manager('%s.gz' % report_file.pk) as f:
-                    report_downloader.DownloadReport(report_definition, output=f)
+                    print(report_definition)
+                    report_downloader.DownloadReport(report_definition,
+                                                     output=f,                                        include_zero_impressions=True)
                 return report_file
             except GoogleAdsError as e:
                 report_file.delete()  # cleanup

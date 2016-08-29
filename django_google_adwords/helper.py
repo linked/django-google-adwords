@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def adwords_service(client_customer_id=None):
+def adwords_service(client_customer_id=None, include_zero_impressions=True):
     """
     Get an instance of GoogleRefreshTokenClient with configuration as per defined settings
     and use that to create an instance of AdwordsClient.
@@ -21,12 +21,15 @@ def adwords_service(client_customer_id=None):
         client_secret=settings.GOOGLEADWORDS_CLIENT_SECRET,
         refresh_token=settings.GOOGLEADWORDS_REFRESH_TOKEN
     )
+    headers = {}
+    headers['include_zero_impressions'] = include_zero_impressions
 
     return AdWordsClient(
         developer_token=settings.GOOGLEADWORDS_DEVELOPER_TOKEN,
         oauth2_client=oauth2_client,
         user_agent=settings.GOOGLEADWORDS_USER_AGENT,
-        client_customer_id=client_customer_id
+        client_customer_id=client_customer_id,
+        report_downloader_headers=headers,
     )
 
 
