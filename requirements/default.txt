@@ -5,4 +5,4 @@ django-appconf==1.0.1
 celery
 django-cereal==0.2.1
 django-toolkit==0.2.1
--i git+https://github.com/linked/googleads-python-lib#egg=googleads
+-e git+https://github.com/linked/googleads-python-lib#egg=googleads
